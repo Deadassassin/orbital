@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const { execSync } = require('child_process');
 
 class ExtensionManager {
   constructor(app, session) {
@@ -63,6 +65,65 @@ class ExtensionManager {
   getExtension(id) {
     return this.extensions.get(id) || null;
   }
+
+  // ─── Chrome Web Store installer ───────────────────────────────────────────
+
+  async installFromChromeStore(extensionId) {
+    const crxUrl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx3&prodversion=120.0.0.0&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
+    const crxPath = path.join(this.extensionDir, `${extensionId}.crx`);
+    const extPath = path.join(this.extensionDir, extensionId);
+
+    try {
+      await this._downloadFile(crxUrl, crxPath);
+      fs.mkdirSync(extPath, { recursive: true });
+      await this._extractCrx(crxPath, extPath);
+      return await this.installExtension(extPath);
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  _downloadFile(url, dest) {
+    return new Promise((resolve, reject) => {
+      const file = fs.createWriteStream(dest);
+      const get = (u) => https.get(u, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          return get(res.headers.location);
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`Download failed: HTTP ${res.statusCode}`));
+        }
+        res.pipe(file);
+        file.on('finish', () => { file.close(); resolve(); });
+        file.on('error', reject);
+      }).on('error', reject);
+      get(url);
+    });
+  }
+
+  async _extractCrx(crxPath, destDir) {
+    const buf = fs.readFileSync(crxPath);
+    // CRX3: find the PK zip magic bytes and slice from there
+    let zipStart = -1;
+    for (let i = 0; i < buf.length - 1; i++) {
+      if (buf[i] === 0x50 && buf[i + 1] === 0x4B) { zipStart = i; break; }
+    }
+    if (zipStart === -1) throw new Error('Could not find zip data in CRX file');
+
+    const zipPath = crxPath + '.zip';
+    fs.writeFileSync(zipPath, buf.slice(zipStart));
+
+    try {
+      execSync(`unzip -o "${zipPath}" -d "${destDir}"`, { stdio: 'pipe' });
+    } catch (e) {
+      throw new Error('unzip failed — make sure unzip is installed (pacman -S unzip)');
+    } finally {
+      if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+      if (fs.existsSync(crxPath)) fs.unlinkSync(crxPath);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   async installExtension(extPath) {
     try {
