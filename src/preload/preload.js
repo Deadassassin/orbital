@@ -51,6 +51,7 @@ contextBridge.exposeInMainWorld('browserAPI', {
   isFullscreen: () => ipcRenderer.invoke('is-fullscreen'),
   getExtensions: () => ipcRenderer.invoke('get-extensions'),
   installExtension: (extPath) => ipcRenderer.invoke('install-extension', extPath),
+  installFromChromeStore: (extId) => ipcRenderer.invoke('install-from-chrome-store', extId),
   uninstallExtension: (id) => ipcRenderer.invoke('uninstall-extension', id),
   toggleExtension: (id) => ipcRenderer.invoke('toggle-extension', id),
   showNotification: (opts) => ipcRenderer.invoke('show-notification', opts),
@@ -82,6 +83,8 @@ contextBridge.exposeInMainWorld('browserAPI', {
   newWindow: () => ipcRenderer.invoke('new-window'),
   newPrivateWindow: () => ipcRenderer.invoke('new-private-window'),
   openDevtools: () => ipcRenderer.invoke('open-devtools'),
+  getFlags: () => ipcRenderer.invoke('get-flags'),
+  setFlag: (flag, enabled) => ipcRenderer.invoke('set-flag', flag, enabled),
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

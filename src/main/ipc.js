@@ -137,8 +137,34 @@ function setupIPC(ipcMain, context) {
 
   ipcMain.handle('get-extensions', () => extensionManager.getExtensions());
   ipcMain.handle('install-extension', (e, extPath) => extensionManager.installExtension(extPath));
+  ipcMain.handle('install-from-chrome-store', (e, extId) => extensionManager.installFromChromeStore(extId));
   ipcMain.handle('uninstall-extension', (e, id) => extensionManager.uninstallExtension(id));
   ipcMain.handle('toggle-extension', (e, id) => extensionManager.toggleExtension(id));
+
+  ipcMain.handle('get-flags', () => {
+    try {
+      const flagsPath = path.join(app.getPath('userData'), 'flags.json');
+      if (fs.existsSync(flagsPath)) {
+        return JSON.parse(fs.readFileSync(flagsPath, 'utf-8'));
+      }
+    } catch (e) {}
+    return {};
+  });
+
+  ipcMain.handle('set-flag', (e, flag, enabled) => {
+    try {
+      const flagsPath = path.join(app.getPath('userData'), 'flags.json');
+      var flags = {};
+      if (fs.existsSync(flagsPath)) {
+        flags = JSON.parse(fs.readFileSync(flagsPath, 'utf-8'));
+      }
+      flags[flag] = enabled;
+      fs.writeFileSync(flagsPath, JSON.stringify(flags, null, 2), 'utf-8');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  });
 
   ipcMain.handle('show-notification', (e, opts) => {
     const Notification = require('electron').Notification;
@@ -272,6 +298,7 @@ function setupIPC(ipcMain, context) {
       'downloads': 'downloads.html',
       'extensions': 'extensions.html',
       'about': 'about.html',
+      'flags': 'flags.html',
     };
     const file = pages[pageName];
     if (!file) return null;

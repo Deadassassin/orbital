@@ -89,6 +89,7 @@ class Orbital {
     commands.push({ type: 'action', icon: Icons.history, text: 'History', desc: 'View browsing history', hint: 'Ctrl+H', action: function() { window.__orbital.closePalette(); if (tm) tm.navigateTab(tm.activeTabId, 'about:history'); } });
     commands.push({ type: 'action', icon: Icons.downloads, text: 'Downloads', desc: 'View downloaded files', hint: 'Ctrl+J', action: function() { window.__orbital.closePalette(); if (tm) tm.navigateTab(tm.activeTabId, 'about:downloads'); } });
     commands.push({ type: 'action', icon: Icons.extensions, text: 'Extensions', desc: 'Manage extensions', action: function() { window.__orbital.closePalette(); if (tm) tm.navigateTab(tm.activeTabId, 'about:extensions'); } });
+    commands.push({ type: 'action', icon: Icons.flags || Icons.info, text: 'Flags', desc: 'Experimental features settings', action: function() { window.__orbital.closePalette(); if (tm) tm.navigateTab(tm.activeTabId, 'about:flags'); } });
     commands.push({ type: 'action', icon: Icons.info, text: 'About Orbital', desc: 'Version and system info', action: function() { window.__orbital.closePalette(); if (tm) tm.navigateTab(tm.activeTabId, 'about:about'); } });
 
     commands.push({ type: 'separator' });

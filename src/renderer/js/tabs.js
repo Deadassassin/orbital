@@ -631,7 +631,7 @@ class TabManager {
     var loadFallback = function() {
       try { tab.webview.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(fallbackHtml); } catch(e) { tab.webview.src = 'about:blank'; }
     };
-    var validPages = ['settings', 'bookmarks', 'history', 'downloads', 'extensions', 'about'];
+    var validPages = ['settings', 'bookmarks', 'history', 'downloads', 'extensions', 'about', 'flags'];
     if (validPages.indexOf(page) !== -1) {
       window.browserAPI.invoke('get-internal-page', page).then(function(html) {
         if (html) {

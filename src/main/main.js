@@ -1,5 +1,6 @@
 const { app, BrowserWindow, session, ipcMain, Menu, Tray, shell, dialog, nativeTheme, powerSaveBlocker } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { setupIPC } = require('./ipc');
 const { createMenu } = require('./menu');
 const { PrivacyManager } = require('./privacy');
@@ -24,6 +25,33 @@ var isDevMode = process.argv.includes(DEV_FLAG);
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 app.commandLine.appendSwitch('enable-encrypted-media');
 app.commandLine.appendSwitch('enable-widevine');
+
+try {
+  var flagsPath = path.join(app.getPath('userData'), 'flags.json');
+  if (fs.existsSync(flagsPath)) {
+    var flags = JSON.parse(fs.readFileSync(flagsPath, 'utf-8'));
+    var flagMap = {
+      'smooth-scrolling': 'enable-smooth-scrolling',
+      'gpu-rasterization': 'enable-gpu-rasterization',
+      'zero-copy': 'enable-zero-copy',
+      'overlay-scrollbars': 'enable-overlay-scrollbar',
+      'accelerated-video': 'enable-accelerated-video-decode',
+      'webgpu': 'enable-unsafe-swiftshader',
+      'quic': 'enable-quic',
+      'parallel-downloading': 'enable-parallel-downloading',
+      'dns-prefetch': 'enable-dns-prefetch',
+      'preconnect': 'enable-preconnect',
+      'site-isolation': 'site-per-process',
+      'strict-origin-isolation': 'enable-strict-origin-isolation',
+      'enable-vr': 'enable-webvr',
+    };
+    for (var flagId in flags) {
+      if (flags[flagId] === true && flagMap[flagId]) {
+        app.commandLine.appendSwitch(flagMap[flagId]);
+      }
+    }
+  }
+} catch (e) {}
 
 app.whenReady().then(function() {
   var userDataPath = app.getPath('userData');
@@ -59,7 +87,7 @@ app.whenReady().then(function() {
 
   defaultSession.setPermissionRequestHandler(function(webContents, permission, callback) {
     var url = webContents.getURL();
-    var allowedPermissions = ['clipboard-read', 'clipboard-write', 'fullscreen', 'media'];
+    var allowedPermissions = ['clipboard-read', 'clipboard-write', 'fullscreen', 'media', 'protected-media-identifier'];
     if (allowedPermissions.includes(permission)) {
       callback(true);
     } else if (['geolocation', 'notifications', 'camera', 'microphone'].includes(permission)) {

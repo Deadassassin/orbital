@@ -6,10 +6,6 @@ contextBridge.exposeInMainWorld('__shadowPrivacy', {
 });
 
 try {
-  Object.defineProperty(document, 'hidden', { get: () => false });
-} catch (e) {}
-
-try {
   const chromeVer = '136';
   const ua = navigator.userAgent;
   const platform = navigator.platform;

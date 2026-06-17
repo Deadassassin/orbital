@@ -80,7 +80,9 @@ class PrivacyManager {
 
     if (this.blockThirdPartyCookies) {
       ses.setPermissionRequestHandler((wc, perm, cb) => {
-        if (perm === 'clipboard-read' || perm === 'clipboard-write') {
+        if (perm === 'clipboard-read' || perm === 'clipboard-write' || perm === 'media' || perm === 'fullscreen') {
+          cb(true);
+        } else if (perm === 'protected-media-identifier') {
           cb(true);
         } else {
           cb(false);

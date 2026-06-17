@@ -7,9 +7,10 @@
   body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:28px 40px; }
   h1 { font-size:22px; font-weight:300; letter-spacing:.3px; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
   .header-actions { margin-left:auto; display:flex; gap:6px; }
-  .btn { padding:5px 14px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:11px; transition:all .15s; }
+  .btn { padding:5px 14px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:11px; }
   .btn:hover { border-color:var(--text3); }
-  .ext-card { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; transition:background .15s; }
+  .btn-primary { background:var(--accent); color:#0a0a0a; border-color:var(--accent); font-weight:500; }
+  .ext-card { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; }
   .ext-card:hover { background:var(--surface); }
   .ext-icon { width:36px; height:36px; border-radius:6px; background:var(--elevated); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
   .ext-info { flex:1; min-width:0; }
@@ -17,11 +18,19 @@
   .ext-desc { font-size:11px; color:var(--text2); margin-top:1px; }
   .ext-meta { font-size:10px; color:var(--text3); margin-top:1px; }
   .ext-actions { display:flex; gap:6px; align-items:center; }
-  .toggle { width:32px; height:18px; background:var(--border); border-radius:9px; cursor:pointer; transition:background .2s; flex-shrink:0; position:relative; }
+  .toggle { width:32px; height:18px; background:var(--border); border-radius:9px; cursor:pointer; flex-shrink:0; position:relative; }
   .toggle.active { background:var(--accent); }
-  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; background:#0a0a0a; border-radius:50%; transition:transform .2s; }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; background:#0a0a0a; border-radius:50%; }
   .toggle.active::after { transform:translateX(14px); }
   .empty { text-align:center; padding:48px; color:var(--text2); font-size:13px; }
+  .store-section { margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+  .store-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .store-input { flex:1; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px; outline:none; }
+  .store-input:focus { border-color:var(--text3); }
+  .store-input::placeholder { color:var(--text3); }
+  .store-hint { font-size:11px; color:var(--text3); margin-top:4px; }
+  .success { color:var(--success); font-size:11px; }
+  .error { color:var(--danger); font-size:11px; }
 </style></head>
 <body>
   <h1>Extensions
@@ -30,6 +39,17 @@
       <button class="btn" onclick="installExt()">Load Unpacked</button>
     </div>
   </h1>
+
+  <div class="store-section">
+    <div style="font-size:13px;font-weight:500;">Install from Chrome Web Store</div>
+    <div class="store-row">
+      <input type="text" id="store-input" class="store-input" placeholder="Paste Chrome Web Store extension URL or ID...">
+      <button class="btn btn-primary" onclick="installFromStore()">Install</button>
+    </div>
+    <div class="store-hint">Enter the full URL (e.g., https://chromewebstore.google.com/detail/...) or just the extension ID</div>
+    <div id="store-status" class="store-hint"></div>
+  </div>
+
   <div id="ext-list"></div>
   <script>
     const api = window.browserAPI;
@@ -48,9 +68,25 @@
       var result = await api.showOpenDialog({ properties: ['openDirectory'] });
       if (!result.canceled && result.filePaths[0]) {
         var res = await api.installExtension(result.filePaths[0]);
-        if (res.success) { load(); alert('Extension installed: ' + res.extension.name); }
-        else { alert('Failed: ' + (res.error || 'Invalid extension')); }
+        if (res.success) { load(); showStatus('Installed: ' + res.extension.name, 'success'); }
+        else { showStatus('Failed: ' + (res.error || 'Invalid extension'), 'error'); }
       }
+    }
+    function showStatus(msg, type) {
+      var el = document.getElementById('store-status');
+      if (el) { el.textContent = msg; el.className = 'store-hint ' + (type||''); }
+    }
+    async function installFromStore() {
+      var input = document.getElementById('store-input');
+      var val = input ? input.value.trim() : '';
+      if (!val) return;
+      var extId = val;
+      var match = val.match(/\/detail\/[^/]+\/([a-z]{32})/i);
+      if (match) extId = match[1];
+      showStatus('Installing extension ' + extId + '...', '');
+      var res = await api.installFromChromeStore(extId);
+      if (res && res.success) { showStatus('Installed: ' + (res.extension ? res.extension.name : extId), 'success'); if (input) input.value = ''; load(); }
+      else { showStatus('Failed: ' + ((res && res.error) || 'Unknown error'), 'error'); }
     }
     load();
   </script>

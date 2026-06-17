@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('browserAPI', {
   removeDownload: (id) => ipcRenderer.invoke('remove-download', id),
   getExtensions: () => ipcRenderer.invoke('get-extensions'),
   installExtension: (p) => ipcRenderer.invoke('install-extension', p),
+  installFromChromeStore: (extId) => ipcRenderer.invoke('install-from-chrome-store', extId),
   uninstallExtension: (id) => ipcRenderer.invoke('uninstall-extension', id),
   toggleExtension: (id) => ipcRenderer.invoke('toggle-extension', id),
   clearBrowsingData: (d) => ipcRenderer.invoke('clear-browsing-data', d),
@@ -52,6 +53,8 @@ contextBridge.exposeInMainWorld('browserAPI', {
   printPage: () => ipcRenderer.invoke('print-page'),
   savePage: () => ipcRenderer.invoke('save-page'),
   setFullscreen: (f) => ipcRenderer.invoke('set-fullscreen', f),
+  getFlags: () => ipcRenderer.invoke('get-flags'),
+  setFlag: (flag, enabled) => ipcRenderer.invoke('set-flag', flag, enabled),
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
