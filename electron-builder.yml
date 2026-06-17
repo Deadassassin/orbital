@@ -1,0 +1,51 @@
+appId: com.orbital.browser
+productName: Orbital
+
+electronDownload:
+  mirror: "https://github.com/castlabs/electron-releases/releases/download/"
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - src/**/*
+  - icons/**/*
+  - package.json
+  - node_modules/**/*
+
+publish:
+  provider: github
+  owner: Deadassassin
+  repo: orbital
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: icons/icon.png
+  artifactName: ${productName}-Setup-${version}-win64.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  shortcutName: Orbital
+  uninstallDisplayName: Orbital
+  license: build/license.txt
+
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: icons/icon.png
+  category: Network
+  mimeTypes:
+    - text/html
+    - text/xml
+    - application/xhtml+xml

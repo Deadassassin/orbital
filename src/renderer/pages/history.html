@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>History</title>
+<style>
+  :root { --bg:#0a0a0a; --surface:#111; --elevated:#1a1a1a; --text:#e8e8e8; --text2:#888; --text3:#555; --accent:#e8e8e8; --border:#2a2a2a; --danger:#ef4444; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:28px 40px; }
+  h1 { font-size:22px; font-weight:300; letter-spacing:.3px; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+  .header-actions { display:flex; gap:6px; margin-left:auto; }
+  .btn { padding:5px 14px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:11px; transition:all .15s; }
+  .btn:hover { border-color:var(--text3); }
+  .btn-danger { color:var(--danger); }
+  .search { width:100%; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; margin-bottom:18px; }
+  .search:focus { border-color:var(--text3); }
+  .date-group { margin-bottom:16px; }
+  .date-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text3); margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+  .entry { display:flex; align-items:center; gap:10px; padding:5px 10px; border-radius:6px; cursor:pointer; transition:background .15s; }
+  .entry:hover { background:var(--surface); }
+  .entry-icon { width:18px; text-align:center; flex-shrink:0; }
+  .entry-info { flex:1; min-width:0; }
+  .entry-title { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .entry-url { font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .entry-time { font-size:11px; color:var(--text2); flex-shrink:0; }
+  .entry-delete { background:none; border:none; color:var(--text2); cursor:pointer; padding:2px 6px; border-radius:4px; font-size:11px; opacity:0; transition:opacity .15s; }
+  .entry:hover .entry-delete { opacity:1; }
+  .entry-delete:hover { color:var(--danger); }
+  .empty { text-align:center; padding:48px; color:var(--text2); font-size:13px; }
+</style></head>
+<body>
+  <h1>History
+    <div class="header-actions">
+      <button class="btn" onclick="load()">Refresh</button>
+      <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+    </div>
+  </h1>
+  <input type="text" class="search" id="search" placeholder="Search history...">
+  <div id="history-list"></div>
+  <script>
+    const api = window.browserAPI;
+    let allHistory = [];
+    async function load() { allHistory = await api.getHistory() || []; render(); }
+    function render() {
+      var query = document.getElementById('search').value.toLowerCase();
+      var filtered = allHistory;
+      if (query) filtered = filtered.filter(function(h){return (h.title||'').toLowerCase().includes(query)||(h.url||'').toLowerCase().includes(query);});
+      var groups = {};
+      var now = new Date(); now.setHours(0,0,0,0);
+      var yesterday = new Date(now); yesterday.setDate(yesterday.getDate()-1);
+      var lastWeek = new Date(now); lastWeek.setDate(lastWeek.getDate()-7);
+      for (var i=0;i<filtered.length;i++) {
+        var h = filtered[i]; var d = new Date(h.lastVisit || h.firstVisit);
+        var label = d.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+        if (d >= now) label = 'Today'; else if (d >= yesterday) label = 'Yesterday'; else if (d >= lastWeek) label = 'This Week';
+        if (!groups[label]) groups[label] = [];
+        groups[label].push(h);
+      }
+      var container = document.getElementById('history-list');
+      var keys = Object.keys(groups);
+      if (keys.length === 0) { container.innerHTML = '<div class="empty">No history</div>'; return; }
+      container.innerHTML = keys.map(function(label){
+        return '<div class="date-group"><div class="date-label">'+label+'</div>'+
+          groups[label].map(function(h){
+            return '<div class="entry" ondblclick="openUrl(\''+h.url.replace(/'/g,"\\'")+'\')">'+
+              '<span class="entry-icon">'+(h.icon?'<img src="'+h.icon+'" style="width:14px;height:14px">':'<svg viewBox="0 0 24 24" width="14" height="14" style="stroke:var(--text2);fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+'</span>'+
+              '<div class="entry-info"><div class="entry-title">'+(h.title||'(untitled)')+'</div><div class="entry-url">'+h.url+'</div></div>'+
+              '<span class="entry-time">'+new Date(h.lastVisit||h.firstVisit).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</span>'+
+              '<button class="entry-delete" onclick="event.stopPropagation();deleteEntry(\''+h.id+'\')"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+          }).join('')+'</div>';
+      }).join('');
+    }
+    function openUrl(url) { api.navigateTo && api.navigateTo(url); }
+    async function deleteEntry(id) { await api.deleteHistoryEntry(id); load(); }
+    async function clearAll() { if (confirm('Clear all history?')) { await api.clearHistory(); load(); } }
+    document.getElementById('search').addEventListener('input', render);
+    load();
+  </script>
+</body>
+</html>

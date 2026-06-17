@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Settings</title>
+<style>
+  :root { --bg:#0a0a0a; --surface:#111; --elevated:#1a1a1a; --text:#e8e8e8; --text2:#888; --text3:#555; --accent:#e8e8e8; --border:#2a2a2a; --danger:#ef4444; --success:#22c55e; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:32px 48px; max-width:720px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:300; letter-spacing:.3px; margin-bottom:28px; color:var(--text); }
+  h2 { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px; color:var(--text3); }
+  .section { margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
+  .row-label { font-size:13px; }
+  .row-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+  select, input[type="text"] { background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:5px 10px; font-size:12px; outline:none; }
+  select:focus, input[type="text"]:focus { border-color:var(--text3); }
+  .toggle { position:relative; width:36px; height:20px; background:var(--border); border-radius:10px; cursor:pointer; transition:background .2s; flex-shrink:0; }
+  .toggle.active { background:var(--accent); }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; background:#0a0a0a; border-radius:50%; transition:transform .2s; }
+  .toggle.active::after { transform:translateX(16px); }
+  .btn { padding:6px 16px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:12px; transition:all .15s; }
+  .btn:hover { border-color:var(--text3); }
+  .btn-primary { background:var(--accent); color:#0a0a0a; border-color:var(--accent); font-weight:500; }
+  .btn-danger { color:var(--danger); border-color:var(--danger); }
+  .btn-group { display:flex; gap:8px; margin-top:10px; }
+  .checkbox-group { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+  .checkbox-row { display:flex; align-items:center; gap:10px; padding:4px 0; font-size:12px; cursor:pointer; }
+  .checkbox-row input[type="checkbox"] { accent-color:#e8e8e8; width:14px; height:14px; }
+</style></head>
+<body>
+  <h1>Settings</h1>
+
+  <div class="section">
+    <h2>General</h2>
+    <div class="row">
+      <div><div class="row-label">Homepage</div><div class="row-desc">Page shown when you click the home button</div></div>
+      <select id="homepage">
+        <option value="about:newtab">New Tab Page</option>
+        <option value="about:blank">Blank Page</option>
+        <option value="custom">Custom URL</option>
+      </select>
+    </div>
+    <div class="row" id="custom-homepage-row" style="display:none">
+      <div><div class="row-label">Custom Homepage URL</div></div>
+      <input type="text" id="custom-homepage" placeholder="https://" style="width:220px">
+    </div>
+    <div class="row">
+      <div><div class="row-label">Search Engine</div><div class="row-desc">Default search engine for the address bar</div></div>
+      <select id="search-engine">
+        <option value="google">Google</option>
+        <option value="bing">Bing</option>
+        <option value="duckduckgo">DuckDuckGo</option>
+        <option value="brave">Brave Search</option>
+        <option value="yahoo">Yahoo</option>
+      </select>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Show Bookmarks Bar</div><div class="row-desc">Display bookmarks below the address bar</div></div>
+      <div class="toggle" id="bookmark-bar-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Restore Last Session</div><div class="row-desc">Reopen tabs from your last browsing session</div></div>
+      <div class="toggle" id="restore-session-toggle"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Privacy & Security</h2>
+    <div class="row">
+      <div><div class="row-label">Block Trackers</div><div class="row-desc">Block tracking scripts and ad networks</div></div>
+      <div class="toggle" id="tracker-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Block Fingerprinting</div><div class="row-desc">Add noise to browser fingerprinting</div></div>
+      <div class="toggle" id="fingerprint-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Block Third-Party Cookies</div><div class="row-desc">Prevent cross-site tracking</div></div>
+      <div class="toggle" id="cookie-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Send Do Not Track</div><div class="row-desc">Ask sites not to track you</div></div>
+      <div class="toggle" id="dnt-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Upgrade HTTPS</div><div class="row-desc">Auto-upgrade connections to HTTPS</div></div>
+      <div class="toggle" id="https-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Safe Browsing</div><div class="row-desc">Protect against phishing and malware</div></div>
+      <div class="toggle" id="safe-browsing-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Password Manager</div><div class="row-desc">Save and autofill passwords</div></div>
+      <div class="toggle" id="password-manager-toggle"></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-danger" onclick="clearBrowsingData()">Clear Browsing Data...</button>
+    </div>
+    <div id="clear-data-options" style="display:none;margin-top:10px;" class="checkbox-group">
+      <label class="checkbox-row"><input type="checkbox" id="clr-history"> Browsing History</label>
+      <label class="checkbox-row"><input type="checkbox" id="clr-cache"> Cache</label>
+      <label class="checkbox-row"><input type="checkbox" id="clr-cookies"> Cookies & Site Data</label>
+      <label class="checkbox-row"><input type="checkbox" id="clr-downloads"> Downloads History</label>
+      <label class="checkbox-row"><input type="checkbox" id="clr-passwords"> Saved Passwords</label>
+      <button class="btn btn-danger" onclick="confirmClear()" style="margin-top:8px;">Clear Data</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Appearance</h2>
+    <div class="row">
+      <div><div class="row-label">Dark Mode</div><div class="row-desc">Use dark theme</div></div>
+      <div class="toggle" id="dark-mode-toggle"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Downloads</h2>
+    <div class="row">
+      <div><div class="row-label">Download Location</div><div class="row-desc" id="download-path-display"></div></div>
+      <button class="btn" onclick="changeDownloadPath()">Change</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>System</h2>
+    <div class="row">
+      <div><div class="row-label">Hardware Acceleration</div><div class="row-desc">Use GPU for rendering (restart required)</div></div>
+      <div class="toggle" id="hardware-accel-toggle"></div>
+    </div>
+    <div class="row">
+      <div><div class="row-label">Spell Check</div><div class="row-desc">Check spelling in text fields</div></div>
+      <div class="toggle" id="spellcheck-toggle"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>About</h2>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      <div id="settings-version">Orbital v2.0.0</div>
+      <div>Built on Electron/Chromium</div>
+      <div id="system-info"></div>
+    </div>
+  </div>
+
+  <script>
+    const api = window.browserAPI;
+    async function load() {
+      const settings = await api.getSettings() || {};
+      const privacy = await api.getPrivacySettings() || {};
+      var verText = document.getElementById('settings-version');
+      if (verText) {
+        var v = await api.getAppVersion();
+        verText.textContent = 'Orbital v' + v;
+      }
+      setToggle('bookmark-bar-toggle', settings.alwaysShowBookmarkBar || false);
+      setToggle('restore-session-toggle', settings.restoreLastSession !== false);
+      setToggle('tracker-toggle', privacy.blockKnownTrackers !== false);
+      setToggle('fingerprint-toggle', privacy.blockFingerprinting !== false);
+      setToggle('cookie-toggle', privacy.blockThirdPartyCookies !== false);
+      setToggle('dnt-toggle', privacy.doNotTrack !== false);
+      setToggle('https-toggle', privacy.upgradeHttps !== false);
+      setToggle('safe-browsing-toggle', settings.safeBrowsing !== false);
+      setToggle('password-manager-toggle', settings.passwordManager !== false);
+      setToggle('dark-mode-toggle', settings.enableDarkMode !== false);
+      setToggle('hardware-accel-toggle', settings.enableHardwareAcceleration !== false);
+      setToggle('spellcheck-toggle', settings.spellCheckEnabled !== false);
+      const hp = settings.homepage;
+      const hpSelect = document.getElementById('homepage');
+      if (hpSelect) {
+        const hpOptions = ['about:newtab', 'about:blank'];
+        if (hpOptions.includes(hp)) { hpSelect.value = hp; }
+        else { hpSelect.value = 'custom'; document.getElementById('custom-homepage-row').style.display = 'flex'; document.getElementById('custom-homepage').value = hp || ''; }
+      }
+      document.getElementById('search-engine').value = settings.searchEngine || 'google';
+      document.getElementById('download-path-display').textContent = settings.downloadPath || '';
+      const sysInfo = await api.getSystemInfo() || {};
+      document.getElementById('system-info').innerHTML = 'Platform: ' + (sysInfo.platform||'') + ' (' + (sysInfo.arch||'') + ')<br>Chromium: ' + (sysInfo.chromeVersion||'N/A') + '<br>Electron: ' + (sysInfo.electronVersion||'N/A') + '<br>CPU: ' + (sysInfo.cpu||'N/A') + '<br>Memory: ' + (sysInfo.memory||'N/A');
+    }
+    function setToggle(id, enabled) { var el = document.getElementById(id); if (el) el.classList.toggle('active', enabled); }
+    function bindToggle(id, settingKey) {
+      var el = document.getElementById(id); if (!el) return;
+      el.addEventListener('click', async function() {
+        var newVal = !el.classList.contains('active'); el.classList.toggle('active');
+        await api.updateSettings({ [settingKey]: newVal });
+      });
+    }
+    const privacyToggles = { 'tracker-toggle': api.toggleTrackerBlocking, 'fingerprint-toggle': api.toggleFingerprintNoise, 'cookie-toggle': api.toggleThirdPartyCookies, 'dnt-toggle': api.toggleDnt || api.invoke.bind(null, 'toggle-dnt'), 'https-toggle': api.toggleHttpsUpgrade || api.invoke.bind(null, 'toggle-https-upgrade') };
+    Object.entries(privacyToggles).forEach(function(e) {
+      var el = document.getElementById(e[0]); if (!el) return;
+      el.addEventListener('click', async function() { var result = await (typeof e[1] === 'function' ? e[1]() : e[1]); el.classList.toggle('active', result); });
+    });
+    bindToggle('bookmark-bar-toggle', 'alwaysShowBookmarkBar');
+    bindToggle('restore-session-toggle', 'restoreLastSession');
+    bindToggle('safe-browsing-toggle', 'safeBrowsing');
+    bindToggle('password-manager-toggle', 'passwordManager');
+    bindToggle('dark-mode-toggle', 'enableDarkMode');
+    bindToggle('hardware-accel-toggle', 'enableHardwareAcceleration');
+    bindToggle('spellcheck-toggle', 'spellCheckEnabled');
+    document.getElementById('search-engine').addEventListener('change', async function(e) { await api.updateSettings({ searchEngine: e.target.value }); });
+    document.getElementById('homepage').addEventListener('change', async function(e) {
+      var showCustom = e.target.value === 'custom';
+      document.getElementById('custom-homepage-row').style.display = showCustom ? 'flex' : 'none';
+      if (!showCustom) await api.updateSettings({ homepage: e.target.value });
+    });
+    document.getElementById('custom-homepage').addEventListener('blur', async function(e) { if (e.target.value) await api.updateSettings({ homepage: e.target.value }); });
+    document.getElementById('custom-homepage').addEventListener('keydown', async function(e) { if (e.key === 'Enter' && e.target.value) { await api.updateSettings({ homepage: e.target.value }); e.target.blur(); } });
+    async function changeDownloadPath() {
+      var result = await api.showOpenDialog({ properties: ['openDirectory'] });
+      if (!result.canceled && result.filePaths[0]) { await api.updateSettings({ downloadPath: result.filePaths[0] }); document.getElementById('download-path-display').textContent = result.filePaths[0]; }
+    }
+    window.changeDownloadPath = changeDownloadPath;
+    let clearVisible = false;
+    window.clearBrowsingData = function() { clearVisible = !clearVisible; document.getElementById('clear-data-options').style.display = clearVisible ? 'block' : 'none'; };
+    window.confirmClear = async function() {
+      var dataTypes = { history: document.getElementById('clr-history')?.checked, cache: document.getElementById('clr-cache')?.checked, cookies: document.getElementById('clr-cookies')?.checked, downloads: document.getElementById('clr-downloads')?.checked, passwords: document.getElementById('clr-passwords')?.checked };
+      await api.clearBrowsingData(dataTypes); alert('Selected data cleared.'); clearVisible = false; document.getElementById('clear-data-options').style.display = 'none';
+    };
+    load();
+  </script>
+</body>
+</html>

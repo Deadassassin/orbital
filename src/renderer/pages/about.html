@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>About Orbital</title>
+<style>
+  :root { --bg:#0a0a0a; --surface:#111; --elevated:#1a1a1a; --text:#e8e8e8; --text2:#888; --text3:#555; --accent:#e8e8e8; --border:#2a2a2a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:40px; text-align:center; }
+  .logo { margin-bottom:20px; opacity:.7; }
+  h1 { font-size:26px; font-weight:300; letter-spacing:.5px; margin-bottom:6px; }
+  .version { color:var(--text2); font-size:13px; margin-bottom:4px; }
+  .desc { color:var(--text2); font-size:13px; line-height:1.6; max-width:440px; margin-bottom:28px; }
+  .info { font-size:12px; color:var(--text2); line-height:1.8; margin-bottom:24px; }
+  .info span { color:var(--accent); }
+  .btn { padding:7px 18px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:12px; transition:all .15s; }
+  .btn:hover { border-color:var(--text3); background:var(--elevated); }
+  .btn-primary { background:var(--accent); color:#0a0a0a; border-color:var(--accent); font-weight:500; }
+  .btn-primary:hover { opacity:.85; }
+  .btn:disabled { opacity:.35; cursor:default; pointer-events:none; }
+  #update-status { margin-top:14px; font-size:12px; color:var(--text2); min-height:20px; }
+  #update-status.checking { color:var(--accent); }
+  #update-status.available { color:#22c55e; }
+  #update-status.up-to-date { color:var(--text2); }
+  #update-status.error { color:#ef4444; }
+  #update-status.downloading { color:var(--accent); }
+  #update-status.downloaded { color:#22c55e; }
+  .progress-bar { width:180px; height:3px; background:var(--border); border-radius:2px; margin:8px auto; overflow:hidden; }
+  .progress-bar-inner { height:100%; background:var(--accent); border-radius:2px; transition:width .3s; }
+</style></head>
+<body>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" width="36" height="36" style="stroke:#e8e8e8;fill:none;stroke-width:1.5;">
+      <circle cx="12" cy="12" r="8"/>
+      <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(-30 12 12)"/>
+      <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(30 12 12)"/>
+      <circle cx="12" cy="12" r="2" fill="#e8e8e8"/>
+    </svg>
+  </div>
+  <h1>Orbital</h1>
+  <div class="version" id="version-text">Version 2.0.0</div>
+  <div class="desc">
+    A minimal browser built around a command palette.<br>
+    Clean. Fast. Yours.
+  </div>
+  <button class="btn" id="btn-check-updates" onclick="checkUpdates()">Check for Updates</button>
+  <div id="update-status"></div>
+  <div class="info" id="about-info">Loading...</div>
+  <script>
+    var api = window.browserAPI;
+    async function load() {
+      var version = await api.getAppVersion();
+      document.getElementById('version-text').textContent = 'Version ' + version;
+      var info = await api.getSystemInfo() || {};
+      document.getElementById('about-info').innerHTML = 'Platform: <span>' + (info.platform||'') + ' (' + (info.arch||'') + ')</span><br>Chromium: <span>' + (info.chromeVersion||'N/A') + '</span><br>Electron: <span>' + (info.electronVersion||'N/A') + '</span><br>Node.js: <span>' + (info.nodeVersion||'N/A') + '</span>';
+      updateUI(await api.getUpdateStatus());
+    }
+    if (api.onUpdateStatus) api.onUpdateStatus(function(data) { updateUI(data); });
+    function updateUI(data) {
+      var el = document.getElementById('update-status');
+      var btn = document.getElementById('btn-check-updates');
+      if (!el) return;
+      switch (data.status) {
+        case 'checking': el.className = 'checking'; el.innerHTML = 'Checking for updates...'; btn.disabled = true; break;
+        case 'available': el.className = 'available'; el.innerHTML = 'Update available: v' + (data.info ? data.info.version : '') + ' <button class="btn btn-primary" onclick="downloadUpdate()">Download</button>'; btn.disabled = false; break;
+        case 'up-to-date': el.className = 'up-to-date'; el.innerHTML = "You're up to date!"; btn.disabled = false; break;
+        case 'downloading': el.className = 'downloading'; var pct = data.progress ? Math.round(data.progress.percent) : 0; el.innerHTML = 'Downloading... ' + pct + '%<div class="progress-bar"><div class="progress-bar-inner" style="width:' + pct + '%"></div></div>'; btn.disabled = true; break;
+        case 'downloaded': el.className = 'downloaded'; el.innerHTML = 'Update downloaded! <button class="btn btn-primary" onclick="installUpdate()">Restart & Install</button>'; btn.disabled = false; break;
+        case 'error': el.className = 'error'; el.innerHTML = 'Update failed: ' + (data.message || 'Unknown error'); btn.disabled = false; break;
+        default: el.className = ''; el.textContent = ''; btn.disabled = false;
+      }
+    }
+    async function checkUpdates() {
+      var el = document.getElementById('update-status'); el.className = 'checking'; el.innerHTML = 'Checking for updates...'; document.getElementById('btn-check-updates').disabled = true;
+      await api.checkForUpdates();
+    }
+    window.checkUpdates = checkUpdates;
+    async function downloadUpdate() { await api.downloadUpdate(); }
+    window.downloadUpdate = downloadUpdate;
+    async function installUpdate() { await api.installUpdate(); }
+    window.installUpdate = installUpdate;
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+    "name": "orbital",
+    "version": "1.1.6",
+    "main": "src/main/main.js",
+    "scripts": {
+        "start": "electron .",
+        "build:win": "electron-builder build --win",
+        "build:linux": "electron-builder build --linux",
+        "build:mac": "electron-builder build --mac",
+        "build:all": "electron-builder build --win --linux --mac",
+        "mobile:init": "npx cap init",
+        "mobile:add:android": "npx cap add android",
+        "mobile:add:ios": "npx cap add ios",
+        "mobile:sync": "npx cap sync",
+        "mobile:open:android": "npx cap open android",
+        "mobile:open:ios": "npx cap open ios",
+        "mobile:build": "npx cap copy && npx cap sync"
+    },
+    "dependencies": {
+        "@capacitor/core": "^6.2.1",
+        "@capacitor/splash-screen": "^6.0.4",
+        "electron-updater": "^6.8.9",
+        "uuid": "^11.0.0"
+    },
+    "devDependencies": {
+        "@capacitor/android": "^6.2.1",
+        "@capacitor/cli": "^6.2.1",
+        "@capacitor/ios": "^6.0.0",
+        "electron": "github:castlabs/electron-releases#v37.10.3+wvcus",
+        "electron-builder": "^26.15.3"
+    }
+}

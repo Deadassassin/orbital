@@ -1,0 +1,20 @@
+{
+  "appId": "com.orbital.browser",
+  "appName": "Orbital",
+  "webDir": "src/renderer",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "*"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

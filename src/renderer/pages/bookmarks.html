@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Bookmarks</title>
+<style>
+  :root { --bg:#0a0a0a; --surface:#111; --elevated:#1a1a1a; --text:#e8e8e8; --text2:#888; --text3:#555; --accent:#e8e8e8; --border:#2a2a2a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:28px 40px; }
+  h1 { font-size:22px; font-weight:300; letter-spacing:.3px; margin-bottom:20px; }
+  .search { width:100%; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; margin-bottom:16px; }
+  .search:focus { border-color:var(--text3); }
+  #folders { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
+  .folder { padding:5px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:12px; color:var(--text2); transition:all .15s; }
+  .folder:hover { border-color:var(--text3); color:var(--text); }
+  .folder.active { border-color:var(--accent); color:var(--accent); }
+  .bookmark { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:6px; cursor:pointer; transition:background .15s; }
+  .bookmark:hover { background:var(--surface); }
+  .bm-icon { font-size:16px; width:22px; text-align:center; }
+  .bm-info { flex:1; min-width:0; }
+  .bm-title { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bm-url { font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bm-actions { display:flex; gap:4px; opacity:0; transition:opacity .15s; }
+  .bookmark:hover .bm-actions { opacity:1; }
+  .bm-actions button { background:none; border:none; color:var(--text2); cursor:pointer; padding:3px 6px; border-radius:4px; font-size:11px; }
+  .bm-actions button:hover { background:var(--elevated); color:var(--text); }
+  .empty { text-align:center; padding:48px; color:var(--text2); font-size:13px; }
+</style></head>
+<body>
+  <h1>Bookmarks</h1>
+  <input type="text" class="search" id="search" placeholder="Search bookmarks...">
+  <div id="folders"></div>
+  <div id="bookmarks-list"></div>
+  <script>
+    const api = window.browserAPI;
+    let allBookmarks = [];
+    let currentFolder = '';
+    async function load() { allBookmarks = await api.getBookmarks() || []; render(); }
+    function render() {
+      var folders = [...new Set(allBookmarks.filter(function(b){return b.folder}).map(function(b){return b.folder}))];
+      var fContainer = document.getElementById('folders');
+      fContainer.innerHTML = '<div class="folder'+(currentFolder===''?' active':'')+'" onclick="filterFolder(\'\')">All</div>';
+      for (var fi=0;fi<folders.length;fi++) {
+        (function(f){fContainer.innerHTML += '<div class="folder'+(currentFolder===f?' active':'')+'" onclick="filterFolder(\''+f.replace(/'/g,"\\'")+'\')">'+f+'</div>';})(folders[fi]);
+      }
+      var query = document.getElementById('search').value.toLowerCase();
+      var filtered = allBookmarks;
+      if (currentFolder) filtered = filtered.filter(function(b){return b.folder===currentFolder;});
+      if (query) filtered = filtered.filter(function(b){return (b.title||'').toLowerCase().includes(query)||(b.url||'').toLowerCase().includes(query);});
+      var list = document.getElementById('bookmarks-list');
+      if (filtered.length === 0) { list.innerHTML = '<div class="empty">No bookmarks found</div>'; return; }
+      list.innerHTML = filtered.map(function(b){return '<div class="bookmark" ondblclick="openBookmark(\''+b.url.replace(/'/g,"\\'")+'\')"><span class="bm-icon"><svg viewBox="0 0 24 24" width="14" height="14" style="stroke:var(--text2);fill:none;stroke-width:2;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><div class="bm-info"><div class="bm-title">'+(b.title||b.url)+'</div><div class="bm-url">'+b.url+'</div></div><div class="bm-actions"><button onclick="event.stopPropagation();openBookmark(\''+b.url.replace(/'/g,"\\'")+'\')" title="Open"><svg viewBox="0 0 24 24" width="11" height="11" style="stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button><button onclick="event.stopPropagation();deleteBookmark(\''+b.id+'\')" title="Delete"><svg viewBox="0 0 24 24" width="11" height="11" style="stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>';}).join('');
+    }
+    function filterFolder(f) { currentFolder = f; render(); }
+    function openBookmark(url) { api.navigateTo && api.navigateTo(url); }
+    async function deleteBookmark(id) { await api.removeBookmark(id); load(); }
+    document.getElementById('search').addEventListener('input', render);
+    load();
+  </script>
+</body>
+</html>
