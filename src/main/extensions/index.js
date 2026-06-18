@@ -69,7 +69,7 @@ class ExtensionManager {
   // ─── Chrome Web Store installer ───────────────────────────────────────────
 
   async installFromChromeStore(extensionId) {
-    const crxUrl = `https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx3&prodversion=120.0.0.0&x=id%3D${extensionId}%26installsource%3Dondemand%26uc`;
+    const crxUrl = `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=131.0.6778.86&acceptformat=crx2,crx3&x=id%3D${extensionId}%26uc`;
     const crxPath = path.join(this.extensionDir, `${extensionId}.crx`);
     const extPath = path.join(this.extensionDir, extensionId);
 
@@ -86,9 +86,10 @@ class ExtensionManager {
   _downloadFile(url, dest) {
     return new Promise((resolve, reject) => {
       const file = fs.createWriteStream(dest);
-      const get = (u) => https.get(u, (res) => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-          return get(res.headers.location);
+      const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+      const get = (u) => https.get(u, { headers: { 'User-Agent': USER_AGENT } }, (res) => {
+        if (res.statusCode >= 301 && res.statusCode <= 308) {
+          if (res.headers.location) return get(res.headers.location);
         }
         if (res.statusCode !== 200) {
           return reject(new Error(`Download failed: HTTP ${res.statusCode}`));
@@ -114,22 +115,58 @@ class ExtensionManager {
     fs.writeFileSync(zipPath, buf.slice(zipStart));
 
     try {
-      execSync(`unzip -o "${zipPath}" -d "${destDir}"`, { stdio: 'pipe' });
+      if (process.platform === 'win32') {
+        execSync(`powershell -NoProfile -Command "Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${destDir}' -Force"`, { stdio: 'pipe' });
+      } else {
+        execSync(`unzip -o "${zipPath}" -d "${destDir}"`, { stdio: 'pipe' });
+      }
     } catch (e) {
-      throw new Error('unzip failed — make sure unzip is installed (pacman -S unzip)');
+      var msg = process.platform === 'win32'
+        ? 'Extraction failed — PowerShell Expand-Archive not available'
+        : 'unzip failed — make sure unzip is installed (pacman -S unzip)';
+      throw new Error(msg);
     } finally {
       if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
       if (fs.existsSync(crxPath)) fs.unlinkSync(crxPath);
     }
   }
 
+  _resolveMessages(extPath, manifest) {
+    var locale = Intl?.DateTimeFormat()?.resolvedOptions()?.locale || 'en';
+    locale = locale.replace(/-/g, '_');
+    var localeDir = path.join(extPath, '_locales');
+    var messages = {};
+    try {
+      var candidates = [locale, locale.split('_')[0], 'en'];
+      for (var c of candidates) {
+        var fp = path.join(localeDir, c, 'messages.json');
+        if (fs.existsSync(fp)) {
+          messages = JSON.parse(fs.readFileSync(fp, 'utf-8'));
+          break;
+        }
+      }
+    } catch (e) {}
+    var re = /__MSG_(\w+)__/g;
+    function resolve(str) {
+      if (!str || typeof str !== 'string') return str;
+      return str.replace(re, function(_, key) {
+        var msg = messages[key];
+        return msg ? (msg.message || msg) : _;
+      });
+    }
+    return resolve;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
 
   async installExtension(extPath) {
     try {
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(extPath, 'manifest.json'), 'utf-8')
-      );
+      var manifestRaw = fs.readFileSync(path.join(extPath, 'manifest.json'), 'utf-8');
+      var resolve = this._resolveMessages(extPath, {});
+      var manifest = JSON.parse(manifestRaw, function(key, val) {
+        if (typeof val === 'string') return resolve(val);
+        return val;
+      });
 
       const extId = manifest.id || manifest.name?.toLowerCase().replace(/\s+/g, '-') || Date.now().toString(36);
 
@@ -151,6 +188,7 @@ class ExtensionManager {
         hasBackground: !!manifest.background,
         backgroundScript: manifest.background?.service_worker || null,
         contentScripts: manifest.content_scripts || [],
+        declarativeNetRequest: manifest.declarative_net_request || null,
       };
 
       this.extensions.set(extId, ext);

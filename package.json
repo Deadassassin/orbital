@@ -3,7 +3,7 @@
     "desktopName": "Orbital",
     "description": "Orbital Browser",
     "author": "Deadassassin",
-    "version": "1.1.6",
+    "version": "1.1.8",
     "main": "src/main/main.js",
     "scripts": {
         "start": "electron .",

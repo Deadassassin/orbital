@@ -9,7 +9,7 @@
   // Expose a minimal browserAPI for any loaded scripts that check for it
   window.browserAPI = window.browserAPI || {
     getPlatform: function() { return Promise.resolve('android'); },
-    getAppVersion: function() { return Promise.resolve('2.0.0'); },
+    getAppVersion: function() { return Promise.resolve('1.1.8'); },
     getSystemInfo: function() { return Promise.resolve({ platform: 'android', arch: 'arm64', chromeVersion: (navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || 'N/A' }); },
   };
 

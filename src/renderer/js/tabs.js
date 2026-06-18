@@ -188,20 +188,9 @@ class TabManager {
     });
 
     wv.addEventListener('did-finish-load', function() {
-      var spoof = [
-        'try{',
-        'Object.defineProperty(navigator,"webdriver",{get:()=>undefined});',
-        'if(!window.chrome){',
-        'window.chrome={runtime:{},app:{isInstalled:!1},csi:function(){},loadTimes:function(){}};',
-        'window.chrome.runtime={id:"",sendMessage:function(){},onMessage:{addListener:function(){}}};',
-        '}',
-        'if(navigator.plugins&&navigator.plugins.length===0){',
-        'var p=new Proxy([],{get:function(t,r){return r==="length"?5:r==="0"?{name:"Chrome PDF Plugin"}:r==="1"?{name:"Chrome PDF Viewer"}:void 0}});',
-        'Object.defineProperty(navigator,"plugins",{get:()=>p,configurable:!0});',
-        '}',
-        '}catch(e){}',
-      ].join('');
-      try { wv.executeJavaScript(spoof); } catch(e) {}
+      try { wv.executeJavaScript(
+        'try{Object.defineProperty(navigator,"webdriver",{get:()=>undefined})}catch(e){}'
+      ); } catch(e) {}
     });
 
     tab.webview = wv;

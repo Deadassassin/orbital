@@ -6,6 +6,7 @@ const { createMenu } = require('./menu');
 const { PrivacyManager } = require('./privacy');
 const { StorageManager } = require('./storage');
 const { ExtensionManager } = require('./extensions/index');
+const { AutoUpdater } = require('./updater');
 
 var mainWindow = null;
 var tray = null;
@@ -57,9 +58,11 @@ app.whenReady().then(function() {
   var userDataPath = app.getPath('userData');
   var storagePath = path.join(userDataPath, 'storage');
   privacyManager = new PrivacyManager(session, app);
+  privacyManager.init(userDataPath);
   storageManager = new StorageManager(storagePath, app);
   extensionManager = new ExtensionManager(app, session.defaultSession);
   extensionManager.loadEnabledExtensions().then(function() {}).catch(function(e) { console.log('Extension load error:', e.message); });
+  var autoUpdater = new AutoUpdater();
 
   app.on('widevine-ready', function() { console.log('Widevine ready'); });
   app.on('widevine-update-pending', function() { console.log('Widevine update pending'); });
@@ -69,6 +72,7 @@ app.whenReady().then(function() {
     privacyManager: privacyManager,
     storageManager: storageManager,
     extensionManager: extensionManager,
+    autoUpdater: autoUpdater,
     getMainWindow: function() { return mainWindow; },
     createChildWindow: createChildWindow,
     isPrivateMode: isPrivateMode,
@@ -87,10 +91,10 @@ app.whenReady().then(function() {
 
   defaultSession.setPermissionRequestHandler(function(webContents, permission, callback) {
     var url = webContents.getURL();
-    var allowedPermissions = ['clipboard-read', 'clipboard-write', 'fullscreen', 'media', 'protected-media-identifier'];
+    var allowedPermissions = ['clipboard-read', 'clipboard-write', 'fullscreen', 'media', 'protected-media-identifier', 'geolocation'];
     if (allowedPermissions.includes(permission)) {
       callback(true);
-    } else if (['geolocation', 'notifications', 'camera', 'microphone'].includes(permission)) {
+    } else if (['notifications', 'camera', 'microphone'].includes(permission)) {
       dialog.showMessageBox(mainWindow, {
         type: 'question',
         buttons: ['Allow', 'Block'],
@@ -143,8 +147,7 @@ function createMainWindow() {
     title: 'Orbital',
     icon: path.join(__dirname, '..', '..', 'icons', 'icon.png'),
     show: false,
-    titleBarStyle: 'hiddenInset',
-    frame: process.platform === 'linux' ? true : false,
+    frame: false,
     backgroundColor: '#0a0a0a',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
@@ -231,8 +234,7 @@ function createChildWindow(url, opts) {
     title: isPrivate ? 'Orbital (Private)' : 'Orbital',
     icon: path.join(__dirname, '..', '..', 'icons', 'icon.png'),
     show: false,
-    titleBarStyle: 'hiddenInset',
-    frame: process.platform === 'linux' ? true : false,
+    frame: false,
     backgroundColor: '#1a1b2e',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),

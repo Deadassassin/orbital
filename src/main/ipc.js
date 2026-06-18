@@ -30,6 +30,8 @@ function setupIPC(ipcMain, context) {
 
   ipcMain.handle('get-privacy-settings', () => privacyManager.getSettings());
   ipcMain.handle('toggle-tracker-blocking', () => privacyManager.toggleTrackerBlocking());
+  ipcMain.handle('toggle-ad-blocking', () => privacyManager.toggleAdBlocking());
+  ipcMain.handle('update-blocklist', (e, raw) => privacyManager.updateBlocklist(raw));
   ipcMain.handle('toggle-fingerprint-noise', () => privacyManager.toggleFingerprintNoise());
   ipcMain.handle('toggle-third-party-cookies', () => privacyManager.toggleThirdPartyCookies());
   ipcMain.handle('toggle-dnt', () => privacyManager.toggleDnt());

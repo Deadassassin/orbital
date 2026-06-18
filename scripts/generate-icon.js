@@ -14,8 +14,12 @@ function createPNG(width, height, r, g, b) {
       const dist = Math.sqrt(dx * dx + dy * dy);
       const angle = Math.atan2(dy, dx);
 
+      // Outside the circle - transparent
+      if (dist > radius) {
+        rawData[idx] = 0; rawData[idx+1] = 0; rawData[idx+2] = 0; rawData[idx+3] = 0;
+      }
       // Outer ring
-      if (dist <= radius && dist > radius - 6) {
+      else if (dist <= radius && dist > radius - 6) {
         rawData[idx] = 255; rawData[idx+1] = 255; rawData[idx+2] = 255; rawData[idx+3] = 255;
       }
       // Inner circle
@@ -31,8 +35,6 @@ function createPNG(width, height, r, g, b) {
         } else {
           rawData[idx] = r; rawData[idx+1] = g; rawData[idx+2] = b; rawData[idx+3] = 255;
         }
-      } else {
-        rawData[idx] = r; rawData[idx+1] = g; rawData[idx+2] = b; rawData[idx+3] = 255;
       }
     }
   }
@@ -101,7 +103,7 @@ const sizes = [16, 32, 48, 64, 128, 256];
 const outDir = path.join(__dirname, '..', 'icons');
 
 for (const size of sizes) {
-  const png = createPNG(size, size, 108, 99, 255); // Purple (#6c63ff)
+  const png = createPNG(size, size, 0, 0, 0); // Black
   fs.writeFileSync(path.join(outDir, `icon${size}.png`), png);
   console.log(`Created icon${size}.png (${size}x${size})`);
 }

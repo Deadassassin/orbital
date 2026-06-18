@@ -12,6 +12,54 @@ if (document.readyState === 'loading') {
   setupMouseNav();
 }
 
+try {
+  if (typeof navigator.webdriver !== 'undefined') {
+    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+  }
+  if (navigator.languages && navigator.languages.length === 0) {
+    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+  }
+} catch (e) {}
+
+try {
+  if (!window.chrome || Object.keys(window.chrome).length === 0) {
+    window.chrome = {
+      runtime: {
+        id: 'shadow-browser-builtin',
+        getManifest: () => ({ name: 'Orbital', version: '1.1.8' }),
+        getURL: (p) => p,
+        connect: () => ({ postMessage: () => {}, onMessage: { addListener: () => {} } }),
+        sendMessage: (msg, cb) => { if (cb) cb(); },
+        onMessage: { addListener: () => {}, removeListener: () => {} },
+        onConnect: { addListener: () => {}, removeListener: () => {} },
+        lastError: undefined,
+      },
+      app: {
+        isInstalled: false,
+        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },
+        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },
+        getDetails: () => ({}),
+        getIsInstalled: () => false,
+      },
+      webstore: {
+        onInstallStageChanged: { addListener: () => {} },
+        onDownloadProgress: { addListener: () => {} },
+      },
+      csi: () => ({}),
+      loadTimes: () => ({}),
+      bookmarks: {},
+      storage: { local: {} },
+      tabs: { query: () => Promise.resolve([]) },
+      windows: { getCurrent: () => Promise.resolve({}) },
+      extension: {
+        getURL: (p) => p,
+        inIncognitoContext: false,
+      },
+      i18n: { getMessage: () => '' },
+    };
+  }
+} catch (e) {}
+
 contextBridge.exposeInMainWorld('browserAPI', {
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openPath: (p) => ipcRenderer.invoke('open-path', p),
@@ -45,6 +93,8 @@ contextBridge.exposeInMainWorld('browserAPI', {
   newPrivateWindow: () => ipcRenderer.invoke('new-private-window'),
   openDevtools: () => ipcRenderer.invoke('open-devtools'),
   toggleTrackerBlocking: () => ipcRenderer.invoke('toggle-tracker-blocking'),
+  toggleAdBlocking: () => ipcRenderer.invoke('toggle-ad-blocking'),
+  updateBlocklist: (raw) => ipcRenderer.invoke('update-blocklist', raw),
   toggleFingerprintNoise: () => ipcRenderer.invoke('toggle-fingerprint-noise'),
   toggleThirdPartyCookies: () => ipcRenderer.invoke('toggle-third-party-cookies'),
   toggleDnt: () => ipcRenderer.invoke('toggle-dnt'),
