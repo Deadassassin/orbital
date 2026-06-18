@@ -2,137 +2,448 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' *; img-src * data: blob:; media-src * blob:; connect-src *; font-src 'self' data:; frame-src *; child-src *;">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
   <title>Orbital</title>
-  <link rel="stylesheet" href="../renderer/css/style.css">
   <style>
-    /* Mobile adjustments */
-    #tab-sidebar { width: 100%; max-width: 280px; }
-    #cmd-palette { width: 95vw; max-width: 500px; }
-    #cmd-palette-trigger { width: auto; flex: 1; max-width: none; }
-    #nav-bar.visible { height: 44px; }
-    #url-input { font-size: 14px; }
-    .tab { padding: 10px 12px; min-height: 40px; }
-    #titlebar { height: 44px; }
-    #statusbar { display: none; }
-    #sidebar-toggle { display: none; }
+    :root{--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--bg:#0a0a0a;--srf:#111;--elv:#1a1a1a;--brd:#222;--txt:#e8e8e8;--t2:#777;--bb:48px;--tb:40px}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,Inter,Segoe UI,sans-serif;font-size:13px}
+    body{display:flex;flex-direction:column;height:100vh}
+    #tb{height:var(--tb);padding:0 2px;padding-top:var(--st);display:flex;align-items:center;gap:2px;background:var(--bg);border-bottom:1px solid var(--brd);flex-shrink:0}
+    #tb button{background:none;border:none;color:var(--t2);width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+    #tb button:active{background:var(--srf)}
+    #tb button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+    #pgt{flex:1;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:var(--txt);padding:0 2px}
+    #tc{position:absolute;top:0;right:0;background:var(--txt);color:var(--bg);font-size:8px;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;pointer-events:none}
+    #ntp{display:flex;flex-direction:column;align-items:center;padding-top:24px;gap:16px;flex:1;overflow-y:auto;padding-bottom:calc(var(--bb) + 12px)}
+    .ntp-logo svg{width:32px;height:32px;stroke:var(--txt);fill:none;stroke-width:1.2;opacity:.4}
+    .ntp-t{font-size:18px;font-weight:300;color:var(--txt);letter-spacing:.3px}
+    .ntp-s{width:100%;max-width:400px;padding:0 16px}
+    .ntp-s input{width:100%;padding:12px 14px;background:var(--srf);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font-size:14px;outline:none}
+    .ntp-s input:focus{border-color:#555}
+    .ntp-s input::placeholder{color:#555}
+    .scs{width:100%;max-width:400px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px}
+    .sc{height:64px;background:var(--srf);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid var(--brd);cursor:pointer}
+    .sc:active{background:var(--elv);border-color:#333}
+    .sc-i{font-size:16px;color:var(--t2);font-weight:500}
+    .sc-l{font-size:9px;color:var(--t2)}
+    #bb{position:fixed;bottom:0;left:0;right:0;height:var(--bb);padding-bottom:var(--sb);background:var(--bg);border-top:1px solid var(--brd);display:flex;align-items:center;padding:0 2px;gap:1px;z-index:100}
+    #bb button{background:none;border:none;color:var(--t2);width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+    #bb button:active{background:var(--srf)}
+    #bb button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+    #bbu{flex:1;height:28px;background:var(--srf);border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:var(--t2);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:0 2px}
+    #bbu:active{background:var(--elv)}
+    #url-o{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:300;display:none;flex-direction:column;padding:var(--st) 0 0}
+    #url-o.open{display:flex}
+    .url-h{padding:8px 12px;display:flex;align-items:center;gap:6px;background:var(--bg)}
+    .url-h input{flex:1;background:var(--srf);border:1px solid var(--brd);padding:10px 12px;border-radius:8px;color:var(--txt);font-size:15px;outline:none}
+    .url-h input:focus{border-color:#555}
+    .url-h button{background:none;border:none;color:var(--t2);padding:6px 10px;cursor:pointer;font-size:13px;border-radius:6px}
+    .url-h button:active{background:var(--srf)}
+    #tab-o{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:250;display:none;flex-direction:column;padding:var(--st) 0 var(--sb)}
+    #tab-o.open{display:flex}
+    #tab-h{display:flex;align-items:center;padding:6px 14px;padding-top:calc(6px + var(--st));border-bottom:1px solid var(--brd);flex-shrink:0}
+    #tab-h .lbl{flex:1;font-size:14px;font-weight:500}
+    #tab-h button{background:none;border:none;color:var(--t2);padding:6px 10px;cursor:pointer;font-size:13px;border-radius:6px}
+    #tab-h button:active{background:var(--srf)}
+    #tab-l{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:6px}
+    .tab-c{border-radius:10px;background:var(--srf);border:1px solid var(--brd);overflow:hidden;display:flex;align-items:center;padding:10px 12px;cursor:pointer;flex-shrink:0;min-height:48px}
+    .tab-c:active{background:var(--elv);border-color:#333}
+    .tab-c.active{border-color:var(--txt)}
+    .tab-ci{width:28px;height:28px;border-radius:5px;background:var(--elv);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--t2);flex-shrink:0;margin-right:10px}
+    .tab-ci img{width:100%;height:100%;border-radius:5px}
+    .tab-ci svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.5}
+    .tab-cb{flex:1;min-width:0}
+    .tab-ct{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+    .tab-cu{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+    .tab-cx{width:28px;height:28px;border:none;background:none;color:var(--t2);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:6px}
+    .tab-cx:active{background:var(--elv)}
+    .tab-cx svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+    #tab-f{flex-shrink:0;padding:6px 14px;padding-bottom:calc(6px + var(--sb));border-top:1px solid var(--brd)}
+    #tab-f button{width:100%;padding:10px;border:none;background:var(--srf);border-radius:8px;color:var(--txt);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+    #tab-f button:active{background:var(--elv)}
+    #tab-f button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+    #menu-o{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:260;display:none;flex-direction:column;padding:var(--st) 0 var(--sb)}
+    #menu-o.open{display:flex}
+    #menu-h{display:flex;align-items:center;padding:6px 14px;padding-top:calc(6px + var(--st));border-bottom:1px solid var(--brd);flex-shrink:0}
+    #menu-h .lbl{flex:1;font-size:14px;font-weight:500}
+    #menu-h button{background:none;border:none;color:var(--t2);padding:6px 10px;cursor:pointer;font-size:13px;border-radius:6px}
+    #menu-h button:active{background:var(--srf)}
+    #menu-b{flex:1;overflow-y:auto;padding:12px 14px}
+    .menu-s{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--brd)}
+    .menu-s:last-child{border-bottom:none}
+    .menu-l{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
+    .zoom-v{font-size:22px;font-weight:200;margin-bottom:8px}
+    .zoom-v span{font-variant-numeric:tabular-nums}
+    .zoom-b{display:flex;gap:4px}
+    .zoom-btn{background:var(--srf);border:1px solid var(--brd);color:var(--txt);padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;flex:1;text-align:center;min-width:42px}
+    .zoom-btn:active{background:var(--elv);border-color:#333}
+    .zoom-btn.active{border-color:var(--txt);background:var(--elv)}
+    .tg-r{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+    .tg-l{font-size:13px;color:var(--txt)}
+    .tg-s{font-size:11px;color:var(--t2)}
+    .tg{width:40px;height:24px;border-radius:12px;border:1px solid var(--brd);background:var(--srf);cursor:pointer;position:relative;flex-shrink:0;transition:background .15s}
+    .tg:active{opacity:.8}
+    .tg.on{background:#1a73e8;border-color:#1a73e8}
+    .tg::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--t2);transition:transform .15s,background .15s}
+    .tg.on::after{transform:translateX(16px);background:#fff}
+    #clr-c{background:var(--srf);border:1px solid var(--brd);color:var(--txt);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;width:100%;margin-top:4px}
+    #clr-c:active{background:var(--elv)}
+    .hidden{display:none!important}
   </style>
 </head>
 <body>
-  <div id="app">
-    <div id="titlebar">
-      <div id="orbital-brand">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><ellipse cx="12" cy="12" rx="8" ry="3" stroke="currentColor" stroke-width="1.5" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="8" ry="3" stroke="currentColor" stroke-width="1.5" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
-        <span>Orbital</span>
-      </div>
-      <div id="titlebar-center">
-        <div id="cmd-palette-trigger" title="Search or enter address">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span>Search or enter address...</span>
-        </div>
-      </div>
-    </div>
+  <div id="tb">
+    <button id="bt-tabs" title="Tabs">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span id="tc">0</span>
+    </button>
+    <button id="bt-newtab" title="New Tab">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div id="pgt">New Tab</div>
+    <button id="bt-menu" title="Menu">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </div>
 
-    <div id="loading-bar" class="hidden"><div id="loading-bar-inner"></div></div>
+  <div id="ntp">
+    <div class="ntp-logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(30 12 12)"/><circle cx="12" cy="12" r="2"/></svg></div>
+    <div class="ntp-t">Orbital</div>
+    <div class="ntp-s"><input type="text" id="ntp-i" placeholder="Search or enter address..." autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    <div class="scs" id="scs"></div>
+  </div>
 
-    <div id="main-layout">
-      <div id="tab-sidebar">
-        <div id="tab-sidebar-header">
-          <span class="label">Tabs</span>
-          <button id="btn-sidebar-collapse" title="Collapse">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <input type="text" id="tab-filter" placeholder="Filter tabs..." spellcheck="false">
-        <div id="tabs-list"></div>
-        <button id="new-tab-btn">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New Tab
-        </button>
-      </div>
+  <div id="bb">
+    <button id="bt-bk" title="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button id="bt-fw" title="Forward"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    <div id="bbu">Search or enter address</div>
+    <button id="bt-rf" title="Refresh"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    <button id="bt-ds" title="Data Saver"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l4.8 2.4"/></svg></button>
+  </div>
 
-      <div id="content">
-        <div id="nav-bar">
-          <button class="nav-btn" id="nav-back" title="Back">
-            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <button class="nav-btn" id="nav-forward" title="Forward">
-            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button class="nav-btn" id="nav-reload" title="Reload">
-            <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          </button>
-          <button class="nav-btn" id="nav-home" title="Home">
-            <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/></svg>
-          </button>
-          <div id="nav-url-container">
-            <div id="nav-urlbar">
-              <span id="security-indicator"></span>
-              <input type="text" id="url-input" placeholder="Search or enter address..." spellcheck="false" autocomplete="off" autocorrect="off">
-              <div id="urlbar-dropdown" class="hidden"></div>
-            </div>
-          </div>
-          <button class="nav-btn" id="btn-bookmark" title="Bookmark">
-            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </button>
-        </div>
-
-        <div id="tab-content-area">
-          <div id="webview-container"></div>
-          <div id="internal-pages" class="hidden"></div>
-        </div>
-
-        <div id="find-bar" class="hidden">
-          <input type="text" id="find-input" placeholder="Find in page...">
-          <span id="find-count"></span>
-          <button id="find-prev" title="Previous"><svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg></button>
-          <button id="find-next" title="Next"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>
-          <button id="find-close" title="Close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </div>
-      </div>
-    </div>
-
-    <div id="statusbar" class="hidden">
-      <span id="status-text"></span>
-      <span id="status-zoom">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-        100%
-      </span>
+  <div id="url-o">
+    <div class="url-h">
+      <input type="text" id="url-i" placeholder="Search or enter address..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button id="url-x">Cancel</button>
     </div>
   </div>
 
-  <div id="cmd-palette-overlay" class="hidden">
-    <div id="cmd-palette">
-      <div id="cmd-input-wrap">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="cmd-input" placeholder="Search or enter address..." spellcheck="false" autocomplete="off" autocorrect="off">
+  <div id="tab-o">
+    <div id="tab-h">
+      <span class="lbl">Tabs</span>
+      <button id="tab-done">Done</button>
+    </div>
+    <div id="tab-l"></div>
+    <div id="tab-f"><button id="tab-new"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Tab</button></div>
+  </div>
+
+  <div id="menu-o">
+    <div id="menu-h">
+      <span class="lbl">Settings</span>
+      <button id="menu-done">Done</button>
+    </div>
+    <div id="menu-b">
+      <div class="menu-s">
+        <div class="menu-l">Page Zoom</div>
+        <div class="zoom-v"><span id="zoom-pct">100</span>%</div>
+        <div class="zoom-b" id="zoom-btns"></div>
       </div>
-      <div id="cmd-results"></div>
+      <div class="menu-s">
+        <div class="menu-l">Privacy & Security</div>
+        <div class="tg-r">
+          <div><div class="tg-l">Block Ads</div><div class="tg-s">Hide ad elements and block ad domains</div></div>
+          <div class="tg" id="tg-ab"></div>
+        </div>
+        <div class="tg-r">
+          <div><div class="tg-l">Block Trackers</div><div class="tg-s">Block tracking requests</div></div>
+          <div class="tg" id="tg-tb"></div>
+        </div>
+        <div class="tg-r">
+          <div><div class="tg-l">Block Scripts</div><div class="tg-s">Disable JavaScript on pages</div></div>
+          <div class="tg" id="tg-bs"></div>
+        </div>
+      </div>
+      <div class="menu-s">
+        <div class="menu-l">Data Saver</div>
+        <div class="tg-r">
+          <div><div class="tg-l">Block Images</div><div class="tg-s">Stop loading images to save data</div></div>
+          <div class="tg" id="tg-ds"></div>
+        </div>
+      </div>
+      <div class="menu-s">
+        <div class="menu-l">Browsing</div>
+        <div class="tg-r">
+          <div><div class="tg-l">Desktop Site</div><div class="tg-s">Request desktop versions of websites</div></div>
+          <div class="tg" id="tg-dm"></div>
+        </div>
+        <button id="clr-c">Clear Cache & History</button>
+      </div>
     </div>
   </div>
 
-  <div id="context-menu" class="hidden">
-    <div id="context-menu-items"></div>
-  </div>
+  <script>
+  (function() {
+    var K = 'orbital-v3';
+    var st = load();
+    if (!st) st = { tabs: [], activeId: null, ctr: 0, ds: false, zoom: 100, ab: false, tb: false, bs: false, dm: false };
+    function load() { try { var s = localStorage.getItem(K); return s ? JSON.parse(s) : null; } catch(e) { return null; } }
+    function save() { try { localStorage.setItem(K, JSON.stringify(st)); } catch(e) {} }
+    function at() { return st.tabs.find(function(t) { return t.id === st.activeId; }); }
 
-  <div id="download-notification" class="hidden">
-    <div class="notif-icon">
-      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    </div>
-    <div class="notif-info">
-      <div class="notif-title"></div>
-      <div class="notif-body"></div>
-    </div>
-  </div>
+    function getMargins() {
+      var tb = document.getElementById('tb');
+      var bb = document.getElementById('bb');
+      var tbr = tb.getBoundingClientRect();
+      var bbr = bb.getBoundingClientRect();
+      return { top: Math.round(tbr.top + tbr.height), bottom: Math.round(window.innerHeight - bbr.top) };
+    }
 
-  <script src="../renderer/js/icons.js"></script>
-  <script src="../renderer/js/tabs.js"></script>
-  <script src="../renderer/js/bookmarks.js"></script>
-  <script src="../renderer/js/history.js"></script>
-  <script src="capacitor-bridge.js"></script>
-  <script src="../renderer/js/toolbar.js"></script>
-  <script src="../renderer/js/settings.js"></script>
-  <script src="../renderer/js/app.js"></script>
+    function applyZoom() {
+      if (window.AndroidBrowser) window.AndroidBrowser.setZoom(st.zoom || 100);
+    }
+
+    function nt(url) {
+      var id = ++st.ctr;
+      var t = { id: id, url: url || '', title: 'New Tab', createdAt: Date.now() };
+      st.tabs.push(t); st.activeId = id; save();
+      if (url) { gt(t, url); } else { sn(); } ui(); return id;
+    }
+
+    function ct(id) {
+      st.tabs = st.tabs.filter(function(t) { return t.id !== id; });
+      if (st.activeId === id) st.activeId = st.tabs.length > 0 ? st.tabs[st.tabs.length - 1].id : null;
+      save();
+      var a = at();
+      if (a && a.url) gt(a, a.url); else sn();
+      ui(); rt();
+    }
+
+    function st2(id) {
+      var t = st.tabs.find(function(t) { return t.id === id; });
+      if (!t) return;
+      st.activeId = id; save();
+      if (t.url) gt(t, t.url); else sn();
+      ui(); ctso();
+    }
+
+    function gt(t, url) {
+      if (!url) { sn(); ui(); return; }
+      t.url = url; save();
+      document.getElementById('ntp').classList.add('hidden');
+      if (window.AndroidBrowser) {
+        var m = getMargins();
+        window.AndroidBrowser.navigate(url, m.top, m.bottom);
+      }
+      else { window.location.href = url; }
+    }
+
+    function sn() {
+      document.getElementById('ntp').classList.remove('hidden');
+      if (window.AndroidBrowser) window.AndroidBrowser.hide();
+      ui();
+    }
+
+    function ui() {
+      var a = at();
+      var ti = 'New Tab', u = 'Search or enter address';
+      if (a) {
+        ti = a.title || 'New Tab';
+        if (a.url) { try { var x = new URL(a.url); u = x.hostname; } catch(e) { u = a.url; } }
+      }
+      document.getElementById('pgt').textContent = ti;
+      document.getElementById('bbu').textContent = u;
+      document.getElementById('tc').textContent = st.tabs.length;
+    }
+
+    window.onUrlChanged = function(url) { var a = at(); if (a) { a.url = url; save(); } ui(); };
+    window.onTitleChanged = function(title) { var a = at(); if (a) { a.title = title; save(); } ui(); };
+    window.onNativeClose = function() { sn(); };
+    window.onRefreshState = function(r) {};
+    window.onPageDone = function() {};
+    window.onCacheCleared = function() {};
+
+    function nav(q) {
+      if (!q || !q.trim()) return;
+      q = q.trim(); var url = q;
+      if (!q.match(/^[a-zA-Z]+:\/\//)) {
+        if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) url = 'https://' + q;
+        else url = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+      }
+      clo(); var a = at();
+      if (a) { a.url = url; save(); gt(a, url); } else { nt(url); }
+      ui();
+    }
+
+    function clo() {
+      document.getElementById('url-o').classList.remove('open');
+      if (window.AndroidBrowser) window.AndroidBrowser.overlayHide();
+    }
+
+    function cts() {
+      rt(); if (window.AndroidBrowser) window.AndroidBrowser.overlayShow();
+      document.getElementById('tab-o').classList.add('open');
+    }
+
+    function ctso() { document.getElementById('tab-o').classList.remove('open'); if (window.AndroidBrowser) window.AndroidBrowser.overlayHide(); }
+
+    function cms() {
+      if (window.AndroidBrowser) window.AndroidBrowser.overlayShow();
+      document.getElementById('menu-o').classList.add('open');
+    }
+
+    function cmso() { document.getElementById('menu-o').classList.remove('open'); if (window.AndroidBrowser) window.AndroidBrowser.overlayHide(); }
+
+    function setZoom(z) {
+      st.zoom = z; save();
+      document.getElementById('zoom-pct').textContent = z;
+      document.querySelectorAll('#zoom-btns .zoom-btn').forEach(function(b) {
+        b.classList.toggle('active', parseInt(b.getAttribute('data-z')) === z);
+      });
+      applyZoom();
+    }
+
+    function toggleSetting(key, tgId, javaMethod) {
+      st[key] = !st[key]; save();
+      document.getElementById(tgId).classList.toggle('on', st[key]);
+      if (window.AndroidBrowser) window.AndroidBrowser[javaMethod](st[key]);
+    }
+
+    function updateDS() {
+      document.getElementById('bt-ds').style.opacity = st.ds ? '1' : '0.4';
+    }
+
+    function renderZoom() {
+      var p = [75, 100, 125, 150, 200];
+      document.getElementById('zoom-btns').innerHTML = p.map(function(z) {
+        return '<button class="zoom-btn' + (st.zoom === z ? ' active' : '') + '" data-z="' + z + '">' + z + '%</button>';
+      }).join('');
+    }
+
+    function rt() {
+      var l = document.getElementById('tab-l');
+      var a = at();
+      var h = st.tabs.map(function(t) {
+        var ia = t.id === (a && a.id);
+        var du = t.url || '';
+        try { var x = new URL(du); du = x.hostname; } catch(e) {}
+        return '<div class="tab-c' + (ia ? ' active' : '') + '" data-id="' + t.id + '">' +
+          '<div class="tab-ci">' + (t.title ? t.title[0].toUpperCase() : '?') + '</div>' +
+          '<div class="tab-cb"><div class="tab-ct">' + esc(t.title || 'New Tab') + '</div>' +
+          '<div class="tab-cu">' + esc(du) + '</div></div>' +
+          '<button class="tab-cx" data-id="' + t.id + '"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+      }).join('');
+      l.innerHTML = h;
+    }
+
+    function rsc() {
+      var s = [
+        { l: 'Google', u: 'https://www.google.com' }, { l: 'GitHub', u: 'https://github.com' },
+        { l: 'YouTube', u: 'https://youtube.com' }, { l: 'Reddit', u: 'https://reddit.com' },
+        { l: 'Wikipedia', u: 'https://wikipedia.org' }, { l: 'X', u: 'https://x.com' },
+        { l: 'Amazon', u: 'https://amazon.com' }, { l: 'Maps', u: 'https://maps.google.com' },
+      ];
+      document.getElementById('scs').innerHTML = s.map(function(s) {
+        return '<div class="sc" data-u="' + s.u + '"><span class="sc-i">' + s.l[0] + '</span><span class="sc-l">' + s.l + '</span></div>';
+      }).join('');
+    }
+
+    function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function init() {
+      document.getElementById('bt-tabs').addEventListener('click', cts);
+      document.getElementById('bt-newtab').addEventListener('click', function() { nt(); });
+      document.getElementById('bt-menu').addEventListener('click', cms);
+      document.getElementById('bt-bk').addEventListener('click', function() { if (window.AndroidBrowser) window.AndroidBrowser.goBack(); });
+      document.getElementById('bt-fw').addEventListener('click', function() { if (window.AndroidBrowser) window.AndroidBrowser.goForward(); });
+      document.getElementById('bt-rf').addEventListener('click', function() { if (window.AndroidBrowser) window.AndroidBrowser.reload(); });
+      document.getElementById('bt-ds').addEventListener('click', function() {
+        st.ds = !st.ds; if (window.AndroidBrowser) window.AndroidBrowser.setDataSaver(st.ds);
+        save(); updateDS(); document.getElementById('tg-ds').classList.toggle('on', st.ds);
+      });
+      document.getElementById('bbu').addEventListener('click', function() {
+        if (window.AndroidBrowser) window.AndroidBrowser.overlayShow();
+        document.getElementById('url-o').classList.add('open');
+        var a = at(); document.getElementById('url-i').value = a && a.url ? a.url : '';
+        setTimeout(function() { document.getElementById('url-i').focus(); document.getElementById('url-i').select(); }, 100);
+      });
+      document.getElementById('url-i').addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') clo();
+        else if (e.key === 'Enter') { e.preventDefault(); nav(this.value); }
+      });
+      document.getElementById('url-x').addEventListener('click', clo);
+      document.getElementById('ntp-i').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); nav(this.value); }
+      });
+      document.getElementById('tab-done').addEventListener('click', ctso);
+      document.getElementById('tab-new').addEventListener('click', function() { ctso(); nt(); });
+      document.getElementById('menu-done').addEventListener('click', cmso);
+      document.getElementById('clr-c').addEventListener('click', function() {
+        if (window.AndroidBrowser) window.AndroidBrowser.clearCache();
+      });
+
+      document.getElementById('tg-ds').addEventListener('click', function() {
+        toggleSetting('ds', 'tg-ds', 'setDataSaver'); updateDS();
+      });
+
+      document.getElementById('tg-ab').addEventListener('click', function() {
+        toggleSetting('ab', 'tg-ab', 'setAdBlock');
+      });
+
+      document.getElementById('tg-tb').addEventListener('click', function() {
+        toggleSetting('tb', 'tg-tb', 'setTrackerBlock');
+      });
+
+      document.getElementById('tg-bs').addEventListener('click', function() {
+        toggleSetting('bs', 'tg-bs', 'setBlockScripts');
+      });
+
+      document.getElementById('tg-dm').addEventListener('click', function() {
+        toggleSetting('dm', 'tg-dm', 'setDesktopMode');
+      });
+
+      document.querySelectorAll('#zoom-btns').forEach(function(c) {
+        c.addEventListener('click', function(e) {
+          var b = e.target.closest('.zoom-btn');
+          if (b) setZoom(parseInt(b.getAttribute('data-z')));
+        });
+      });
+
+      document.addEventListener('click', function(e) {
+        var el;
+        el = e.target.closest('.tab-c');
+        if (el && !e.target.closest('.tab-cx')) { st2(parseInt(el.getAttribute('data-id'))); return; }
+        el = e.target.closest('.tab-cx');
+        if (el) { e.stopPropagation(); ct(parseInt(el.getAttribute('data-id'))); rt(); return; }
+        el = e.target.closest('.sc');
+        if (el) { nav(el.getAttribute('data-u')); }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'l') { e.preventDefault(); document.getElementById('bbu').click(); }
+      });
+
+      renderZoom();
+      updateDS();
+      ['tg-ds','tg-ab','tg-tb','tg-bs','tg-dm'].forEach(function(id) {
+        var key = id.replace('tg-','');
+        document.getElementById(id).classList.toggle('on', st[key]);
+      });
+
+      if (window.AndroidBrowser) {
+        window.AndroidBrowser.setDataSaver(st.ds);
+        window.AndroidBrowser.setAdBlock(st.ab);
+        window.AndroidBrowser.setTrackerBlock(st.tb);
+        window.AndroidBrowser.setBlockScripts(st.bs);
+        window.AndroidBrowser.setDesktopMode(st.dm);
+      }
+      rsc();
+      if (st.tabs.length > 0) { var a = at(); if (a && a.url) gt(a, a.url); else sn(); }
+      else { nt(); }
+      ui();
+    }
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+  </script>
 </body>
 </html>

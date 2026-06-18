@@ -40,12 +40,22 @@ nsis:
   license: build/license.txt
 
 linux:
+  maintainer: Deadassassin <deadassassin@example.com>
+  syncDesktopName: true
   target:
-    - AppImage
-    - deb
+    - target: deb
+      arch:
+        - x64
+    - target: rpm
+      arch:
+        - x64
+    - target: tar.gz
+      arch:
+        - x64
   icon: icons/icon.png
   category: Network
   mimeTypes:
     - text/html
     - text/xml
     - application/xhtml+xml
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}

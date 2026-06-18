@@ -1,0 +1,54 @@
+name: Build Linux
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+        env:
+          npm_config_build_from_source: true
+
+      - name: Build Linux packages
+        run: npm run build:linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: release/*.deb
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: release/*.rpm
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: release/*.tar.gz
+          if-no-files-found: warn
+
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.deb
+            release/*.rpm
+            release/*.tar.gz

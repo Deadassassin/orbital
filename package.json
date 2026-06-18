@@ -1,5 +1,8 @@
 {
     "name": "orbital",
+    "desktopName": "Orbital",
+    "description": "Orbital Browser",
+    "author": "Deadassassin",
     "version": "1.1.6",
     "main": "src/main/main.js",
     "scripts": {
@@ -11,10 +14,12 @@
         "mobile:init": "npx cap init",
         "mobile:add:android": "npx cap add android",
         "mobile:add:ios": "npx cap add ios",
-        "mobile:sync": "npx cap sync",
         "mobile:open:android": "npx cap open android",
         "mobile:open:ios": "npx cap open ios",
-        "mobile:build": "npx cap copy && npx cap sync"
+        "mobile:prepare": "node scripts/mobile-prepare.js",
+        "mobile:copy": "npx cap copy",
+        "mobile:sync": "npm run mobile:prepare && npx cap sync",
+        "mobile:build": "npm run mobile:prepare && npx cap copy && npx cap sync"
     },
     "dependencies": {
         "@capacitor/core": "^6.2.1",

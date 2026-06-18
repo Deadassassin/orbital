@@ -1,13 +1,14 @@
 {
   "appId": "com.orbital.browser",
   "appName": "Orbital",
-  "webDir": "src/renderer",
+  "webDir": "src/mobile",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
     "allowNavigation": [
       "*"
-    ]
+    ],
+    "cleartext": true
   },
   "plugins": {
     "SplashScreen": {

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Flags</title>
+<style>
+  :root { --bg:#0a0a0a; --surface:#111; --elevated:#1a1a1a; --text:#e8e8e8; --text2:#888; --text3:#555; --accent:#e8e8e8; --border:#2a2a2a; --warning:#eab308; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif; background:var(--bg); color:var(--text); padding:28px 40px; max-width:800px; margin:0 auto; }
+  h1 { font-size:22px; font-weight:300; letter-spacing:.3px; margin-bottom:4px; }
+  .subtitle { font-size:12px; color:var(--text3); margin-bottom:24px; }
+  .section { margin-bottom:24px; }
+  .section-title { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px; color:var(--text3); }
+  .flag-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:8px; margin-bottom:6px; }
+  .flag-row:hover { background:var(--surface); }
+  .flag-info { flex:1; min-width:0; }
+  .flag-name { font-size:13px; font-weight:500; font-family:'SF Mono','Cascadia Code','Consolas',monospace; }
+  .flag-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+  .flag-meta { font-size:10px; color:var(--text3); margin-top:1px; }
+  .toggle { width:36px; height:20px; background:var(--border); border-radius:10px; cursor:pointer; flex-shrink:0; position:relative; }
+  .toggle.active { background:var(--accent); }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; background:#0a0a0a; border-radius:50%; }
+  .toggle.active::after { transform:translateX(16px); }
+  .banner { background:rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:12px; color:var(--warning); }
+  .btn { padding:5px 14px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; font-size:11px; }
+  .btn:hover { border-color:var(--text3); }
+  .header-actions { margin-left:auto; display:flex; gap:6px; align-items:center; }
+</style></head>
+<body>
+  <h1>Flags <span style="font-weight:400;font-size:13px;color:var(--text3);margin-left:8px;">Experimental Features</span></h1>
+  <div class="subtitle">Warning: These features are experimental. Changing them may affect browser stability, security, or performance.</div>
+  <div class="banner"><strong>&#9888; Restart required</strong> &mdash; Flag changes take effect after restarting Orbital.</div>
+
+  <div class="section">
+    <div class="section-title">Performance</div>
+    <div id="perf-flags"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Network</div>
+    <div id="net-flags"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Security</div>
+    <div id="sec-flags"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Developer Tools</div>
+    <div id="dev-flags"></div>
+  </div>
+
+  <script>
+    var allFlags = [
+      { id: 'smooth-scrolling', name: 'Smooth Scrolling', desc: 'Enable smooth scrolling for better visual experience', section: 'perf', restart: true },
+      { id: 'gpu-rasterization', name: 'GPU Rasterization', desc: 'Use GPU for rasterization to improve page rendering', section: 'perf', restart: true },
+      { id: 'zero-copy', name: 'Zero-Copy Rasterizer', desc: 'Enable zero-copy rasterizer for faster tile rendering', section: 'perf', restart: true },
+      { id: 'overlay-scrollbars', name: 'Overlay Scrollbars', desc: 'Use overlay scrollbars that auto-hide', section: 'perf', restart: true },
+      { id: 'accelerated-video', name: 'GPU Accelerated Video Decode', desc: 'Use hardware acceleration for video decoding', section: 'perf', restart: true },
+      { id: 'webgpu', name: 'WebGPU', desc: 'Enable WebGPU API for advanced graphics and compute', section: 'perf', restart: true },
+
+      { id: 'quic', name: 'QUIC Protocol', desc: 'Enable QUIC protocol for faster network connections', section: 'net', restart: true },
+      { id: 'parallel-downloading', name: 'Parallel Downloading', desc: 'Download files using multiple connections for faster downloads', section: 'net', restart: true },
+      { id: 'dns-prefetch', name: 'DNS Prefetching', desc: 'Pre-resolve DNS for linked pages to speed up navigation', section: 'net', restart: true },
+      { id: 'preconnect', name: 'Preconnect to Search Engines', desc: 'Pre-establish connections to default search engine', section: 'net', restart: true },
+
+      { id: 'site-isolation', name: 'Strict Site Isolation', desc: 'Each site runs in its own process for stronger security', section: 'sec', restart: true },
+      { id: 'strict-origin-isolation', name: 'Strict Origin Isolation', desc: 'Isolate pages by origin for enhanced security', section: 'sec', restart: true },
+
+      { id: 'auto-devtools', name: 'Auto-Open DevTools', desc: 'Automatically open DevTools for new tabs (developer mode)', section: 'dev', restart: false },
+      { id: 'enable-vr', name: 'WebVR', desc: 'Enable WebVR API for virtual reality content', section: 'dev', restart: true },
+      { id: 'extension-debugging', name: 'Extension Debugging', desc: 'Enable verbose logging for extension background scripts', section: 'dev', restart: false },
+    ];
+
+    var api = window.browserAPI;
+    var currentFlags = {};
+
+    async function init() {
+      currentFlags = await api.getFlags() || {};
+      renderFlags('perf-flags', 'perf');
+      renderFlags('net-flags', 'net');
+      renderFlags('sec-flags', 'sec');
+      renderFlags('dev-flags', 'dev');
+    }
+
+    function renderFlags(containerId, section) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+      var items = allFlags.filter(function(f) { return f.section === section; });
+      container.innerHTML = items.map(function(f) {
+        var enabled = currentFlags[f.id] === true;
+        return '<div class="flag-row"><div class="flag-info"><div class="flag-name">' + f.name + '</div><div class="flag-desc">' + f.desc + '</div><div class="flag-meta">--' + f.id + (f.restart ? ' &middot; restart required' : '') + '</div></div><div class="toggle ' + (enabled ? 'active' : '') + '" data-flag="' + f.id + '"></div></div>';
+      }).join('');
+      container.querySelectorAll('.toggle').forEach(function(el) {
+        el.addEventListener('click', async function() {
+          var flagId = this.dataset.flag;
+          var newVal = !this.classList.contains('active');
+          this.classList.toggle('active');
+          currentFlags[flagId] = newVal;
+          await api.setFlag(flagId, newVal);
+        });
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
